@@ -15,3 +15,8 @@ app.post('/api/notify', sendNotification);
 app.listen(PORT, () => {
   console.log(`🚀 Microservicio de Notificaciones corriendo en http://localhost:${PORT}`);
 });
+
+// Es vital añadir '0.0.0.0' para que Render pueda redirigir el tráfico
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Microservicio de Notificaciones corriendo en puerto ${PORT}`);
+});
