@@ -4,23 +4,22 @@ const cors = require('cors');
 const { sendNotification } = require('./controllers/notificationController');
 
 const app = express();
-const PORT = process.env.PORT || 5001; // Usamos el 5001 para no chocar con el Backend Principal (5000)
+// Render asigna un puerto dinámico, por eso process.env.PORT es prioridad
+const PORT = process.env.PORT || 5001; 
 
 app.use(cors());
 app.use(express.json());
 
+// Ruta de salud (Vital para que Render no marque el servicio como caído)
 app.get('/', (req, res) => {
     res.status(200).send('Microservicio OK');
 });
 
-// Ruta única para recibir notificaciones
+// Ruta para recibir notificaciones
 app.post('/api/notify', sendNotification);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Microservicio de Notificaciones corriendo en http://localhost:${PORT}`);
-});
-
-// Es vital añadir '0.0.0.0' para que Render pueda redirigir el tráfico
+// UN SOLO app.listen: Configuramos '0.0.0.0' para que sea visible en la nube
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Microservicio de Notificaciones corriendo en puerto ${PORT}`);
+    console.log(`📢 Entorno: ${process.env.NODE_ENV || 'desarrollo'}`);
 });
