@@ -9,6 +9,10 @@ const PORT = process.env.PORT || 5001; // Usamos el 5001 para no chocar con el B
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+    res.status(200).send('Microservicio OK');
+});
+
 // Ruta única para recibir notificaciones
 app.post('/api/notify', sendNotification);
 
