@@ -1,4 +1,5 @@
-const { apiInstance, SibApiV3Sdk } = require('../config/mailer'); // Cambio aquí
+const axios = require('axios');
+const { BREVO_API_URL, BREVO_API_KEY } = require('../config/mailer');
 const { contactEmailTemplate } = require('../templates/emailTemplate');
 const { customerWelcomeTemplate } = require('../templates/customerTemplate');
 
@@ -10,41 +11,50 @@ const sendNotification = async (req, res) => {
     }
 
     try {
-        const prepararEmail = (destinatario, asunto, contenido) => {
-            // Cambio en la forma de instanciar el objeto de email
-            let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
-            
-            sendSmtpEmail.subject = asunto;
-            sendSmtpEmail.htmlContent = contenido;
-            sendSmtpEmail.sender = { "name": "Visual Core Digital", "email": "visualcoredigital@gmail.com" };
-            sendSmtpEmail.to = [{ "email": destinatario }];
-            return sendSmtpEmail;
+        // Configuración común para Axios
+        const axiosConfig = {
+            headers: {
+                'api-key': BREVO_API_KEY,
+                'Content-Type': 'application/json'
+            }
         };
 
-        const emailAdmin = prepararEmail(
-            process.env.EMAIL_ADMIN || 'visualcoredigital@gmail.com',
-            `Nuevo Lead: ${contactData.nombre}`,
-            contactEmailTemplate(contactData)
-        );
+        // Función para armar el cuerpo del correo según la API de Brevo
+        const crearPayload = (toEmail, subject, html) => ({
+            sender: { name: "Visual Core Digital", email: "visualcoredigital@gmail.com" },
+            to: [{ email: toEmail }],
+            subject: subject,
+            htmlContent: html
+        });
 
-        const emailCliente = prepararEmail(
-            contactData.email,
-            'Confirmación de contacto - Visual Core Digital',
-            customerWelcomeTemplate(contactData.nombre)
-        );
-
-        // Envío
+        // Enviamos los dos correos en paralelo usando Axios
         await Promise.all([
-            apiInstance.sendTransacEmail(emailAdmin),
-            apiInstance.sendTransacEmail(emailCliente)
+            axios.post(BREVO_API_URL, crearPayload(
+                process.env.EMAIL_ADMIN || 'visualcoredigital@gmail.com',
+                `Nuevo Lead: ${contactData.nombre}`,
+                contactEmailTemplate(contactData)
+            ), axiosConfig),
+            
+            axios.post(BREVO_API_URL, crearPayload(
+                contactData.email,
+                'Confirmación de contacto - Visual Core Digital',
+                customerWelcomeTemplate(contactData.nombre)
+            ), axiosConfig)
         ]);
 
-        console.log('✅ Correos enviados con éxito vía Brevo');
+        console.log('✅ Correos enviados con éxito vía API REST (Brevo)');
         return res.status(200).json({ success: true, message: "Notificaciones enviadas" });
 
     } catch (error) {
-        console.error('❌ Error en el envío de Brevo:', error.message);
-        return res.status(500).json({ success: false, error: error.message });
+        // Log detallado para saber qué dice Brevo si falla
+        const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
+        console.error('❌ Error en el envío:', errorMsg);
+        
+        return res.status(500).json({ 
+            success: false, 
+            error: "Fallo en el servicio de correo",
+            details: errorMsg
+        });
     }
 };
 
