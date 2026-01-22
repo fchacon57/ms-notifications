@@ -1,4 +1,4 @@
-const { apiInstance, Brevo } = require('../config/mailer');
+const { apiInstance, SibApiV3Sdk } = require('../config/mailer'); // Cambio aquí
 const { contactEmailTemplate } = require('../templates/emailTemplate');
 const { customerWelcomeTemplate } = require('../templates/customerTemplate');
 
@@ -10,17 +10,17 @@ const sendNotification = async (req, res) => {
     }
 
     try {
-        // Función auxiliar para configurar cada envío
         const prepararEmail = (destinatario, asunto, contenido) => {
-            let email = new Brevo.SendSmtpEmail();
-            email.subject = asunto;
-            email.htmlContent = contenido;
-            email.sender = { "name": "Visual Core Digital", "email": "visualcoredigital@gmail.com" };
-            email.to = [{ "email": destinatario }];
-            return email;
+            // Cambio en la forma de instanciar el objeto de email
+            let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail(); 
+            
+            sendSmtpEmail.subject = asunto;
+            sendSmtpEmail.htmlContent = contenido;
+            sendSmtpEmail.sender = { "name": "Visual Core Digital", "email": "visualcoredigital@gmail.com" };
+            sendSmtpEmail.to = [{ "email": destinatario }];
+            return sendSmtpEmail;
         };
 
-        // Creamos los dos correos
         const emailAdmin = prepararEmail(
             process.env.EMAIL_ADMIN || 'visualcoredigital@gmail.com',
             `Nuevo Lead: ${contactData.nombre}`,
@@ -33,13 +33,13 @@ const sendNotification = async (req, res) => {
             customerWelcomeTemplate(contactData.nombre)
         );
 
-        // Enviamos ambos en paralelo
+        // Envío
         await Promise.all([
             apiInstance.sendTransacEmail(emailAdmin),
             apiInstance.sendTransacEmail(emailCliente)
         ]);
 
-        console.log('✅ Correos enviados con éxito a través de Brevo');
+        console.log('✅ Correos enviados con éxito vía Brevo');
         return res.status(200).json({ success: true, message: "Notificaciones enviadas" });
 
     } catch (error) {

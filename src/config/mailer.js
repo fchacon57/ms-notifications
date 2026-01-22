@@ -1,12 +1,12 @@
-const Brevo = require('@getbrevo/brevo');
+const SibApiV3Sdk = require('@getbrevo/brevo');
 
-// Configuración del cliente Brevo
-let defaultClient = Brevo.ApiClient.instance;
-let apiKey = defaultClient.authentications['api-key'];
+// Configuramos la autenticación de forma directa
+const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-// IMPORTANTE: Asegúrate de que esta variable esté en el panel de Render
+// Configuramos la API Key
+const client = SibApiV3Sdk.ApiClient.instance;
+const apiKey = client.authentications['api-key'];
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
-
-module.exports = { apiInstance, Brevo };
+// Exportamos solo lo que necesitamos
+module.exports = { apiInstance, SibApiV3Sdk };
